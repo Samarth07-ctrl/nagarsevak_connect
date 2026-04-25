@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nagarsevak Connect | Your Ward Feed</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Ward Assignment / Login Simulation -->
+    <div id="welcome-screen" class="welcome-overlay">
+        <div class="card modal">
+            <h1 class="logo" style="margin-bottom: 1rem; text-align: center;">Nagarsevak Connect</h1>
+            <p style="text-align: center; margin-bottom: 2rem; color: var(--text-muted);">Enter your location to join your local ward community.</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" placeholder="e.g. john_doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Ward</label>
+                    <select id="location" required>
+                        <option value="" disabled selected>Select your ward</option>
+                        <option value="1. Kalas-Dhanori-Lohegaon">1. Kalas-Dhanori-Lohegaon</option>
+                        <option value="2. Phulenagar-Nagpur Chawl">2. Phulenagar-Nagpur Chawl</option>
+                        <option value="3. Vimannagar-Lohegaon">3. Vimannagar-Lohegaon</option>
+                        <option value="4. Kharadi-Wagholi">4. Kharadi-Wagholi</option>
+                        <option value="5. Kalyaninagar-Vadgaonsheri">5. Kalyaninagar-Vadgaonsheri</option>
+                        <option value="6. Yerawada-Gandhinagar">6. Yerawada-Gandhinagar</option>
+                        <option value="7. Gokhalenagar-Wakdewadi">7. Gokhalenagar-Wakdewadi</option>
+                        <option value="8. Aundh-Bopodi">8. Aundh-Bopodi</option>
+                        <option value="9. Sus-Baner-Pashan">9. Sus-Baner-Pashan</option>
+                        <option value="10. Bavdhan-Bhusari Colony">10. Bavdhan-Bhusari Colony</option>
+                        <option value="11. Rambaug Colony-Shivteerthnagar">11. Rambaug Colony-Shivteerthnagar</option>
+                        <option value="12. Shivajinagar-Model Colony">12. Shivajinagar-Model Colony</option>
+                        <option value="13. Pune Station-Jay Jawannagar">13. Pune Station-Jay Jawannagar</option>
+                        <option value="14. Koregaon Park-Ghorpadi-Mundhwa">14. Koregaon Park-Ghorpadi-Mundhwa</option>
+                        <option value="15. Manjri-Budhruk-Keshavnagar-Sadesatranali">15. Manjri-Budhruk-Keshavnagar-Sadesatranali</option>
+                        <option value="16. Hadapsar-Satavwadi">16. Hadapsar-Satavwadi</option>
+                        <option value="17. Ramtekdi-Malwadi-Vaiduwadi">17. Ramtekdi-Malwadi-Vaiduwadi</option>
+                        <option value="18. Wanowrie-Salunkhe Vihar">18. Wanowrie-Salunkhe Vihar</option>
+                        <option value="19. Kondhwa Khurd-Kausurbaug">19. Kondhwa Khurd-Kausurbaug</option>
+                        <option value="20. Shankar Maharaj Math-Bibewadi">20. Shankar Maharaj Math-Bibewadi</option>
+                        <option value="21. Mukundnagar-Salisbury Park">21. Mukundnagar-Salisbury Park</option>
+                        <option value="22. Kashewadi-Dias Plot">22. Kashewadi-Dias Plot</option>
+                        <option value="23. Raviwar Peth-Nana Peth">23. Raviwar Peth-Nana Peth</option>
+                        <option value="24. Kasba Ganpati-Kamla Nehru Hospital-KEM hospital">24. Kasba Ganpati-Kamla Nehru Hospital-KEM hospital</option>
+                        <option value="25. Shaniwar Peth-Mahatma Phule Mandai">25. Shaniwar Peth-Mahatma Phule Mandai</option>
+                        <option value="26. GhorpadePeth-Gurwarpeth-Samta Bhoomi">26. GhorpadePeth-Gurwarpeth-Samta Bhoomi</option>
+                        <option value="27. Navi Peth- Parvati">27. Navi Peth- Parvati</option>
+                        <option value="28. Janta Vasahat-Hingane Khurd">28. Janta Vasahat-Hingane Khurd</option>
+                        <option value="29. Deccan Gymkhana-Happy Colony">29. Deccan Gymkhana-Happy Colony</option>
+                        <option value="30. Karvenagar-Hingane Home Colony">30. Karvenagar-Hingane Home Colony</option>
+                        <option value="31. Mayur Colony-Kothrud">31. Mayur Colony-Kothrud</option>
+                        <option value="32. Warje-Popularnagar">32. Warje-Popularnagar</option>
+                        <option value="33. Shivane-Khadakwasla-Dhayari">33. Shivane-Khadakwasla-Dhayari</option>
+                        <option value="34. Vadgaon Budhruk-Dhayari">34. Vadgaon Budhruk-Dhayari</option>
+                        <option value="35. Suncity-Manikbaug">35. Suncity-Manikbaug</option>
+                        <option value="36. Sahakarnagar-Padmavati">36. Sahakarnagar-Padmavati</option>
+                        <option value="37. Dhankawadi-Katraj Dairy">37. Dhankawadi-Katraj Dairy</option>
+                        <option value="38. Balajinagar-Ambegaon-Katraj">38. Balajinagar-Ambegaon-Katraj</option>
+                        <option value="39. Upper Super Indiranagar">39. Upper Super Indiranagar</option>
+                        <option value="40. Kondhwa Budhruk-Yeolewadi">40. Kondhwa Budhruk-Yeolewadi</option>
+                        <option value="41. Mohammadwadi-Undri">41. Mohammadwadi-Undri</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn" data-tooltip="Join your ward community">Enter Platform</button>
+            </form>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 1rem; text-align: center;">
+                Backend powered by C++ Logic Engine (backend.cpp)
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Platform -->
+    <div id="main-app" style="display: none;">
+        <div class="app-container">
+            <header>
+                <div class="logo">Nagarsevak Connect</div>
+                <div class="user-badge" data-tooltip="Your current session info">
+                    <span id="display-username">User</span> @ <span id="display-ward">Ward</span>
+                </div>
+            </header>
+
+            <aside class="sidebar">
+                <!-- Create Issue Card -->
+                <div class="card">
+                    <h2 class="card-title">Report Civic Issue</h2>
+                    <form id="post-form">
+                        <div class="form-group">
+                            <label>Issue Title</label>
+                            <input type="text" id="issue-title" placeholder="Pothole, Broken light..." required>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="issue-category" required>
+                                <option value="Roads & Potholes">Roads & Potholes</option>
+                                <option value="Garbage & Waste">Garbage & Waste</option>
+                                <option value="Water Supply">Water Supply</option>
+                                <option value="Electricity & Streetlights">Electricity & Streetlights</option>
+                                <option value="Public Transport">Public Transport</option>
+                                <option value="Emergency">Emergency</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="issue-desc" rows="3" placeholder="Provide details about the location and severity..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Location / Landmark</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="issue-location" placeholder="e.g. Near Central Park...">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn" data-tooltip="Submit this issue to your ward feed">Post to Ward</button>
+                    </form>
+                </div>
+
+                <!-- Announcements Card -->
+                <div class="card">
+                    <h2 class="card-title">Ward Announcements</h2>
+                    <div id="announcement-list">
+                        <div class="announcement">
+                            <p class="announcement-text">Maintenance scheduled for Main St tomorrow at 9 AM.</p>
+                            <p class="announcement-meta">Authority • 2h ago</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main>
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h2 class="card-title">Trending in Local Feed</h2>
+                    <div id="issue-feed" class="feed">
+                        <!-- Issues will be dynamic -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            currentUser: null,
+            currentWard: "",
+            issues: [
+                { id: '101', ward: "1. Kalas-Dhanori-Lohegaon", title: "Non-functional street light on Oak St", category: "Electricity & Streetlights", description: "The light at the intersection of Oak and 4th hasn't worked for 3 days.", upvotes: 12, author: "sarah_m", location: "Oak St" },
+                { id: '102', ward: "1. Kalas-Dhanori-Lohegaon", title: "Garbage pile-up behind Central Plaza", category: "Garbage & Waste", description: "Needs immediate attention from waste management.", upvotes: 8, author: "mike_k", location: "Central Plaza" }
+            ],
+            voted: new Set()
+        };
+
+        // Note: In an actual environment, this JS would call the C++ backend API endpoints 
+        // (/api/issues, /api/upvotes, /submit). The below is a client simulation 
+        // so the AI Studio preview functions without needing a C++ compiler.
+
+        async function fetchIssues() {
+            // Simulated fetch
+            renderFeed();
+        }
+
+        function renderFeed() {
+            const feedContainer = document.getElementById('issue-feed');
+            const wardIssues = state.issues
+                .filter(i => i.ward === state.currentWard)
+                .sort((a, b) => b.upvotes - a.upvotes); // Sorted by upvotes from C++ side
+
+            if (wardIssues.length === 0) {
+                feedContainer.innerHTML = "<p style='color: var(--text-muted);'>No issues reported in this ward yet. Be the first to report!</p>";
+                return;
+            }
+
+            feedContainer.innerHTML = wardIssues.map(issue => `
+                <div class="card issue-card">
+                    <div class="vote-column">
+                        <button class="vote-btn ${state.voted.has(issue.id) ? 'active' : ''}" style="${state.voted.has(issue.id) ? 'color: var(--accent); border-color: var(--accent);' : ''}" onclick="addVote('${issue.id}')" data-tooltip="${state.voted.has(issue.id) ? 'You upvoted this' : 'Upvote this issue'}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                        </button>
+                        <span class="vote-count">${issue.upvotes}</span>
+                    </div>
+                    <div class="issue-content">
+                        <div class="issue-header">
+                            <h3 class="issue-title">${issue.title}</h3>
+                            <span class="issue-status status-pending">${issue.category}</span>
+                        </div>
+                        <p class="issue-desc">${issue.description}</p>
+                        <div class="issue-footer">
+                            <span>ID: ${issue.id}</span>
+                            <span>•</span>
+                            <span>Ward: ${issue.ward}</span>
+                            ${issue.location ? `<span>•</span><span data-tooltip="Location Attached">📍 ${issue.location}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function addVote(id) {
+            if (state.voted.has(id)) return;
+            const issue = state.issues.find(i => i.id === id);
+            if (issue) {
+                issue.upvotes++;
+                state.voted.add(id);
+                renderFeed();
+            }
+        }
+
+        // --- INTERACTION HANDLERS ---
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const location = document.getElementById('location').value;
+            
+            state.currentUser = username;
+            state.currentWard = location; // User directly selects their ward from dropdown
+
+            document.getElementById('display-username').textContent = username;
+            document.getElementById('display-ward').textContent = state.currentWard;
+
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+
+            // Initial simulated fetch
+            fetchIssues();
+        });
+
+        document.getElementById('post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('issue-title').value;
+            const category = document.getElementById('issue-category').value;
+            const desc = document.getElementById('issue-desc').value;
+            const locationStr = document.getElementById('issue-location').value;
+
+            // Simulated backend post
+            const newIssue = {
+                id: 'ISSUE-' + (state.issues.length + 101),
+                ward: state.currentWard,
+                title: title,
+                category: category,
+                description: desc,
+                upvotes: 0,
+                author: state.currentUser,
+                location: locationStr
+            };
+            state.issues.push(newIssue);
+            
+            e.target.reset();
+            fetchIssues(); // Refresh the list
+        });
+    </script>
+</body>
+</html>

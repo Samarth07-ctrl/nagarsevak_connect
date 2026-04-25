@@ -1,0 +1,8 @@
+{
+  "name": "Nagarsevak Connect",
+  "description": "A minimal civic issue reporting platform for local wards, designed for simplicity and professional civic engagement.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
