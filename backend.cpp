@@ -1,363 +1,397 @@
 /*
- * ════════════════════════════════════════════════════════
- *   NAGARSEVAK CONNECT — C++ OOP Web Server Engine
- *   Pune Municipal Corporation Civic Issue Portal
- * ════════════════════════════════════════════════════════
+ * NAGARSEVAK CONNECT - Pure Terminal Application
+ * Pune Municipal Corporation Civic Issue Portal
+ * Demonstrates all core C++ OOP concepts from syllabus
+ *
+ * Topics Covered:
+ * 1. Classes, Objects, Access Specifiers, Static Members
+ * 2. Constructors (Default, Parameterized, Copy), Destructors
+ * 3. Operator Overloading (Unary, Binary), Friend Functions
+ * 4. Inheritance (Single, Multilevel, Multiple/Hierarchical)
+ * 5. Polymorphism (Overloading, Overriding, Virtual Functions)
+ * 6. Pointers, this pointer, Dynamic Memory (new/delete)
+ * 7. Exception Handling (try/catch/throw, Custom Exceptions)
+ * 8. Templates (Function & Class Templates)
+ * 9. Abstraction, Encapsulation
+ * 10. Inline functions, Default arguments, Scope Resolution
  */
 
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <exception>
-#include <algorithm>
-#include <climits>
-#include <ctime>
-#include <iomanip>
+// HEADER FILES — These give us ready-made tools to use
+#include <iostream>   // For input (cin) and output (cout)
+#include <fstream>    // For reading/writing files (ifstream, ofstream)
+#include <string>     // For using string data type
+#include <sstream>    // For stringstream (helps parse strings)
+#include <exception>  // For exception handling (try/catch/throw)
+#include <climits>    // For INT_MAX constant
+#include <ctime>      // For getting current date and time
+#include <iomanip>    // For output formatting (setw, left, etc.)
 
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #pragma comment(lib, "Ws2_32.lib")
-    typedef int socklen_t;
-#else
-    #include <netinet/in.h>
-    #include <unistd.h>
-    #include <sys/socket.h>
-#endif
-
+// 'using namespace std' lets us write cout instead of std::cout
 using namespace std;
 
-// ════════════════════════════════════════════════════════
-// 9. EXCEPTION HANDLING — Custom Exception Hierarchy
-// ════════════════════════════════════════════════════════
+// ======================================================================
+// EXCEPTION HANDLING (try, catch, throw)
+// ======================================================================
+// What: Exceptions handle errors gracefully instead of crashing.
+// How:  We create custom exception classes that inherit from std::exception.
+//       When error occurs, we 'throw' it. Calling code 'catches' it.
+// Why:  ServerException is BASE. FileException & InputException are DERIVED.
+//       This shows INHERITANCE in exception classes too!
 
-// Base custom exception (inherits from std::exception)
+// Base exception class — inherits from C++ built-in 'exception' class
+// 'public exception' = INHERITANCE (ServerException IS-A exception)
 class ServerException : public exception {
-    string message;
-    string timestamp;
+    string message;      // private: stores the error message
+    string timestamp;    // private: stores when the error happened
 public:
-    ServerException(string msg) : message(msg) {
-        time_t now = time(nullptr);
-        struct tm timeinfo;
-#ifdef _WIN32
-        localtime_s(&timeinfo, &now);
-#else
-        localtime_r(&now, &timeinfo);
-#endif
+    // PARAMETERIZED CONSTRUCTOR — takes error message as input
+    ServerException(string msg) : message(msg) {  // initializer list
+        time_t now = time(nullptr);       // get current time
+        struct tm* ti = localtime(&now);  // convert to local time
         char buf[64];
-        strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+        strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ti);
         timestamp = string(buf);
     }
-    
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-    
+    // FUNCTION OVERRIDING — overrides what() from base 'exception' class
+    // 'const noexcept override' = won't modify object, won't throw, overrides parent
+    const char* what() const noexcept override { return message.c_str(); }
+    // INLINE FUNCTION — compiler replaces call with actual code (faster)
     inline string getTimestamp() const { return timestamp; }
 };
 
+// SINGLE INHERITANCE — FileException inherits from ServerException
+// Constructor calls PARENT constructor using : ServerException(...)
 class FileException : public ServerException {
 public:
-    FileException(string filename) 
-        : ServerException("File I/O Error: Unable to access '" + filename + "'") {}
+    FileException(string f) : ServerException("File I/O Error: '" + f + "'") {}
 };
 
-class NetworkException : public ServerException {
+// Another child of ServerException — shows HIERARCHICAL INHERITANCE
+// (Multiple classes inheriting from same parent)
+class InputException : public ServerException {
 public:
-    NetworkException(string detail) 
-        : ServerException("Network Error: " + detail) {}
+    InputException(string d) : ServerException("Input Error: " + d) {}
 };
 
-// ════════════════════════════════════════════════════════
-// 1. CORE OOP — Abstract Interface (Abstraction)
-// ════════════════════════════════════════════════════════
+// ======================================================================
+// ABSTRACTION — Pure Virtual Functions / Abstract Classes
+// ======================================================================
+// What: Abstract class = a class with at least one PURE VIRTUAL function
+// How:  '= 0' makes a function pure virtual (no body, MUST be overridden)
+// Why:  Forces all child classes to provide their own implementation
+//       You CANNOT create objects of abstract classes directly!
 
 class ISerializable {
 public:
-    virtual string serialize() const = 0;
-    virtual string toJSON() const = 0;
-    virtual ~ISerializable() {}
+    virtual string serialize() const = 0;  // Pure virtual — child MUST implement
+    virtual ~ISerializable() {}            // Virtual destructor for safe cleanup
 };
 
 class ILoggable {
 public:
-    virtual void logCreation() const = 0;
-    virtual ~ILoggable() {}
+    virtual void logCreation() const = 0;  // Pure virtual — child MUST implement
+    virtual ~ILoggable() {}                // Virtual destructor
 };
 
-// ════════════════════════════════════════════════════════
-// 3. CLASSES, OBJECTS & STATIC MEMBERS
-// ════════════════════════════════════════════════════════
+// ======================================================================
+// CLASSES & OBJECTS, ENCAPSULATION, STATIC MEMBERS
+// ======================================================================
+// CLASS  = Blueprint/template for creating objects (like a form design)
+// OBJECT = Actual instance of a class (like a filled form)
+// ENCAPSULATION = Hiding data using access specifiers:
+//   private:   Only this class can access
+//   protected: This class + child classes can access
+//   public:    Anyone can access
+//
+// MULTIPLE INHERITANCE — Report inherits from BOTH ISerializable AND ILoggable
 
 class Report : public ISerializable, public ILoggable {
-protected:
+protected:  // ACCESS SPECIFIER — accessible by this class and its children
     string id;
     string title;
     string description;
     string createdAt;
-    string location;   // [Encapsulation] Location data
+    string location;
+    // STATIC DATA MEMBERS — shared by ALL objects of this class (not per-object)
+    // Only ONE copy exists no matter how many objects are created
     static int totalReports;
     static int lifetimeReports;
 
 public:
+    // Default Constructor
     Report() : id("0"), title("None"), description("None"), location("None") {
         totalReports++;
         lifetimeReports++;
         setTimestamp();
     }
-    
+
+    // Parameterized Constructor
     Report(string i, string t, string d) : id(i), title(t), description(d), location("None") {
         totalReports++;
         lifetimeReports++;
         setTimestamp();
     }
-    
-    Report(const Report& other) 
-        : id(other.id), title(other.title), description(other.description), 
+
+    // Copy Constructor
+    Report(const Report& other)
+        : id(other.id), title(other.title), description(other.description),
           createdAt(other.createdAt), location(other.location) {
         totalReports++;
         lifetimeReports++;
     }
-    
-    virtual ~Report() { 
-        totalReports--; 
-    }
 
+    // Virtual Destructor (for proper cleanup in inheritance)
+    virtual ~Report() { totalReports--; }
+
+    // Static member functions accessed via scope resolution operator (Report::)
     inline static int getTotalReports() { return totalReports; }
     inline static int getLifetimeReports() { return lifetimeReports; }
-    
+
+    // Encapsulation: getters and setters
     inline string getId() const { return id; }
     inline string getTitle() const { return title; }
-
-    // [Encapsulation] Location Setters/Getters
-    inline void setLocation(string loc) {
-        location = loc;
-    }
+    inline void setLocation(string loc) { location = loc; }
     inline string getLocation() const { return location; }
 
+    // Pure virtual functions (Abstraction — forces derived classes to implement)
     virtual void display() const = 0;
-    virtual string toJSON() const = 0;
-    
+
+    // ILoggable interface implementation
     void logCreation() const override {
         cout << "   [LOG] Report " << id << " created at " << createdAt << "\n";
     }
 
 private:
+    // Private member function
     void setTimestamp() {
         time_t now = time(nullptr);
-        struct tm timeinfo;
-#ifdef _WIN32
-        localtime_s(&timeinfo, &now);
-#else
-        localtime_r(&now, &timeinfo);
-#endif
+        struct tm* ti = localtime(&now);
         char buf[64];
-        strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+        strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ti);
         createdAt = string(buf);
     }
 };
 
+// STATIC MEMBER INITIALIZATION — must be done OUTSIDE the class
+// Uses SCOPE RESOLUTION OPERATOR (::) to say "this belongs to Report class"
+// Report::totalReports means "totalReports that belongs to Report"
 int Report::totalReports = 0;
 int Report::lifetimeReports = 0;
 
-class CivicIssue;
-
-// ════════════════════════════════════════════════════════
-// 6. INHERITANCE — CivicIssue
-// ════════════════════════════════════════════════════════
+// ======================================================================
+// SINGLE INHERITANCE — CivicIssue IS-A Report
+// ======================================================================
+// What: CivicIssue inherits ALL members of Report (id, title, etc.)
+// How:  'class CivicIssue : public Report' = public inheritance
+// Also demonstrates: Operator Overloading, Friend Functions
 
 class CivicIssue : public Report {
 protected:
-    string ward;
+    string ward;       // Extra data not in parent Report
     string category;
     int upvotes;
 
 public:
+    // DEFAULT CONSTRUCTOR — no arguments, sets default values
+    // Report() calls the PARENT's default constructor first (constructor chaining)
     CivicIssue() : Report(), ward("Unknown"), category("Unknown"), upvotes(0) {}
-    
+
+    // PARAMETERIZED CONSTRUCTOR with DEFAULT ARGUMENT (loc = "None")
+    // If caller doesn't pass 'loc', it automatically becomes "None"
+    // Report(i, t, d) = calling parent's parameterized constructor
     CivicIssue(string i, string t, string d, string w, string c, string loc = "None")
         : Report(i, t, d), ward(w), category(c), upvotes(0) {
-            this->setLocation(loc);
-        }
-
-    void display() const override {
-        cout << " [" << id << "] " << title << "\n"
-             << "   Ward: " << ward << " | Category: " << category << "\n"
-             << "   Location: " << location << "\n"
-             << "   Desc: " << description << "\n"
-             << "   Priority Votes: " << upvotes << "\n";
+        // 'this' POINTER — points to the current object calling this function
+        // this->setLocation(loc) = "call setLocation on THIS object"
+        this->setLocation(loc);
     }
 
+    // Function Overriding (Runtime Polymorphism via virtual function)
+    void display() const override {
+        cout << "   [" << id << "] " << title << "\n"
+             << "      Ward: " << ward << " | Category: " << category << "\n"
+             << "      Location: " << location << "\n"
+             << "      Description: " << description << "\n"
+             << "      Priority Votes: " << upvotes << "\n";
+    }
+
+    // ISerializable implementation
     string serialize() const override {
         return id + "|" + title + "|" + description + "|" + ward + "|" + category + "|" + to_string(upvotes) + "|" + location;
     }
 
-    string escapeJson(string s) const {
-        string res;
-        res.reserve(s.size() + 10);
-        for (char c : s) {
-            switch (c) {
-                case '"':  res += "\\\""; break;
-                case '\\': res += "\\\\"; break;
-                case '\n': res += "\\n";  break;
-                case '\r': break;
-                case '\t': res += "\\t";  break;
-                default:   res += c;      break;
-            }
-        }
-        return res;
-    }
+    inline string getWard() const { return ward; }
+    inline string getCategory() const { return category; }
+    inline int getUpvotes() const { return upvotes; }
 
-    string toJSON() const override {
-        return "{\"id\":\"" + id 
-             + "\",\"title\":\"" + escapeJson(title) 
-             + "\",\"ward\":\"" + escapeJson(ward) 
-             + "\",\"category\":\"" + escapeJson(category) 
-             + "\",\"description\":\"" + escapeJson(description) 
-             + "\",\"location\":\"" + escapeJson(location) + "\""
-             + ",\"upvotes\":" + to_string(upvotes) + "}";
-    }
+    // ---- OPERATOR OVERLOADING ----
+    // What: Giving new meaning to operators (+, ++, <, ==, <<) for our class
 
-    void operator++() {
-        this->upvotes += 1;
-    }
-    
-    void operator++(int) {
-        this->upvotes += 1;
-    }
+    // UNARY OPERATOR OVERLOADING — prefix ++ (e.g., ++issue)
+    // Unary = works on ONE object. Increases upvotes by 1.
+    void operator++() { this->upvotes += 1; }
 
+    // UNARY OPERATOR OVERLOADING — postfix ++ (e.g., issue++)
+    // 'int' parameter is a dummy just to differentiate from prefix
+    void operator++(int) { this->upvotes += 1; }
+
+    // BINARY OPERATOR OVERLOADING — < (less than)
+    // Binary = works on TWO objects. Compares upvotes of two issues.
+    // 'const' = won't modify either object
     bool operator<(const CivicIssue& other) const {
         return this->upvotes < other.upvotes;
     }
-    
+
+    // BINARY OPERATOR OVERLOADING — == (equality)
     bool operator==(const CivicIssue& other) const {
         return this->id == other.id;
     }
 
+    // FRIEND DECLARATIONS — these outside functions can access private members
+    // 'friend' breaks encapsulation intentionally when needed
     friend ostream& operator<<(ostream& os, const CivicIssue& issue);
     friend void printIssueUrgency(const CivicIssue& issue);
 };
 
+// FRIEND OPERATOR<< — allows us to do: cout << issueObject
+// This function is NOT a member of CivicIssue, but it can access
+// private/protected members (id, title, etc.) because it's declared as 'friend'
 ostream& operator<<(ostream& os, const CivicIssue& issue) {
-    os << "[" << issue.id << "] " << issue.title 
+    os << "[" << issue.id << "] " << issue.title
        << " (" << issue.category << ", " << issue.ward << ") "
-       << "▲" << issue.upvotes;
-    return os;
+       << "Votes:" << issue.upvotes;
+    return os;  // return stream so we can chain: cout << a << b
 }
 
+// FRIEND FUNCTION — not a member, but can access protected 'upvotes'
+// Uses if-else (CONTROL STRUCTURE) to check priority levels
 void printIssueUrgency(const CivicIssue& issue) {
     if (issue.upvotes > 10)
-        cout << "   🔴 [CRITICAL URGENCY — IMMEDIATE ACTION NEEDED]\n";
+        cout << "      >> CRITICAL URGENCY - IMMEDIATE ACTION NEEDED\n";
     else if (issue.upvotes > 5)
-        cout << "   🟡 [High Priority — Escalated]\n";
+        cout << "      >> High Priority - Escalated\n";
     else if (issue.upvotes > 2)
-        cout << "   🟢 [Medium Priority]\n";
+        cout << "      >> Medium Priority\n";
     else
-        cout << "   ⚪ [Normal Priority]\n";
+        cout << "      >> Normal Priority\n";
 }
 
-// ════════════════════════════════════════════════════════
-// 6. MULTILEVEL INHERITANCE
-// ════════════════════════════════════════════════════════
+// ======================================================================
+// MULTILEVEL INHERITANCE: UrgentIssue -> CivicIssue -> Report
+// ======================================================================
+// What: UrgentIssue inherits CivicIssue, which inherits Report
+//       So UrgentIssue gets ALL members from BOTH parent classes!
+// Constructor Chain: UrgentIssue() -> CivicIssue() -> Report()
 
 class UrgentIssue : public CivicIssue {
-    string urgencyLevel;
+    string urgencyLevel;  // private by default in class
 public:
+    // Constructor calls PARENT CivicIssue constructor, which calls Report constructor
+    // This is CONSTRUCTOR BEHAVIOR IN INHERITANCE
     UrgentIssue(string i, string t, string d, string w, string c, string loc, string urg)
         : CivicIssue(i, t, d, w, c, loc), urgencyLevel(urg) {}
 
+    // FUNCTION OVERRIDING — same function name as parent but different behavior
+    // 'override' keyword ensures we're actually overriding a virtual function
     void display() const override {
-        cout << " 🚨 [EMERGENCY — " << urgencyLevel << "] " << title << "\n"
-             << "   Ward: " << ward << " | Immediate action required!\n"
-             << "   Location: " << location << "\n"
-             << "   " << description << "\n";
-    }
-
-    string toJSON() const override {
-        return "{\"id\":\"" + id 
-             + "\",\"title\":\"" + escapeJson(title) 
-             + "\",\"ward\":\"" + escapeJson(ward) 
-             + "\",\"category\":\"" + escapeJson(category) 
-             + "\",\"description\":\"" + escapeJson(description) 
-             + "\",\"location\":\"" + escapeJson(location) + "\""
-             + ",\"upvotes\":" + to_string(upvotes) 
-             + ",\"urgency\":\"" + urgencyLevel + "\"}";
+        cout << "   !! [EMERGENCY - " << urgencyLevel << "] " << title << "\n"
+             << "      Ward: " << ward << " | Immediate action required!\n"
+             << "      Location: " << location << "\n"
+             << "      " << description << "\n";
     }
 };
 
-// ════════════════════════════════════════════════════════
-// 10. TEMPLATES & STL
-// ════════════════════════════════════════════════════════
+// ======================================================================
+// CLASS TEMPLATE + DYNAMIC MEMORY (new/delete) + POINTERS
+// ======================================================================
+// TEMPLATE: Write ONE class that works with ANY data type
+//   'template <typename T>' means T is a placeholder for any type
+//   When we write IssueManager<CivicIssue>, T becomes CivicIssue
+//
+// DYNAMIC MEMORY: Using new/delete instead of fixed arrays
+//   new   = allocate memory at runtime (on heap)
+//   delete = free that memory when done (prevents memory leak)
+//
+// POINTERS: Variables that store memory addresses
+//   T*  = pointer to one T object
+//   T** = pointer to an array of T pointers (array of objects using pointers)
 
 template <typename T>
 class IssueManager {
 private:
-    vector<T*> issues;
+    T** issues;    // POINTER TO POINTER — dynamic array of pointers to objects
+    int count;     // how many issues currently stored
+    int capacity;  // max size before we need to grow the array
+
+    // Private helper: doubles array size when full
+    // Demonstrates: new[], delete[], pointer manipulation
+    void resize() {
+        int newCap = capacity * 2;
+        T** newArr = new T*[newCap];  // allocate bigger array with 'new'
+        for (int i = 0; i < count; i++) {
+            newArr[i] = issues[i];     // copy old pointers to new array
+        }
+        delete[] issues;   // free old array with 'delete[]'
+        issues = newArr;   // point to new array
+        capacity = newCap;
+    }
 
 public:
+    // CONSTRUCTOR — allocates initial dynamic array
+    IssueManager() : count(0), capacity(10) {
+        issues = new T*[capacity];  // 'new' allocates array on heap
+    }
+
+    // Destructor: clean up all dynamic memory
     ~IssueManager() {
         clearMemory();
+        delete[] issues;
     }
 
     void clearMemory() {
-        typename vector<T*>::iterator it = issues.begin();
-        while (it != issues.end()) {
-            delete *it;
-            it++;
+        for (int i = 0; i < count; i++) {
+            delete issues[i];
         }
-        issues.clear();
+        count = 0;
     }
 
     void addIssue(T* issue) {
-        issues.push_back(issue);
+        if (count >= capacity) resize();
+        issues[count] = issue;
+        count++;
     }
 
-    void displayAll() {
-        displayAll(false);
-    }
+    // FUNCTION OVERLOADING — same function name, different parameters
+    // Compiler picks the right version based on arguments passed
+    void displayAll() { displayAll(false); }  // version 1: no arguments
 
-    void displayAll(bool escalatePriorities) {
-        if (issues.empty()) {
+    void displayAll(bool showPriority) {       // version 2: with bool argument
+        if (count == 0) {
             cout << "   [No civic issues found in system]\n";
             return;
         }
-
-        int count = 1;
-        for (typename vector<T*>::iterator it = issues.begin(); it != issues.end(); ++it) {
-            cout << " " << count++ << ". ";
-            (*it)->display();
-            
-            if (escalatePriorities) {
-                if (CivicIssue* c = dynamic_cast<CivicIssue*>(*it)) {
-                    printIssueUrgency(*c);
-                }
+        // LOOP through array using index and pointer arrow operator (->)
+        for (int i = 0; i < count; i++) {
+            cout << "\n   " << (i + 1) << ". ";
+            // issues[i]->display() = RUNTIME POLYMORPHISM
+            // Calls the correct display() based on actual object type
+            issues[i]->display();
+            if (showPriority) {
+                // dynamic_cast = safely convert base pointer to derived pointer
+                CivicIssue* c = dynamic_cast<CivicIssue*>(issues[i]);
+                if (c) printIssueUrgency(*c);  // call friend function
             }
         }
     }
 
-    string getAllIssuesJSON() {
-        string json = "[";
-        for (size_t i = 0; i < issues.size(); ++i) {
-            json += issues[i]->toJSON();
-            if (i < issues.size() - 1) json += ",";
-        }
-        json += "]";
-        return json;
-    }
+    int getCount() const { return count; }
 
-    size_t getCount() const {
-        return issues.size();
-    }
-    
+    // File I/O with exception handling
     void saveToFile(const string& filename) {
         ofstream out(filename);
-        if (!out) {
-            throw FileException(filename);
-        }
-        for (auto item : issues) {
-            out << item->serialize() << "\n";
+        if (!out) throw FileException(filename);
+        for (int i = 0; i < count; i++) {
+            out << issues[i]->serialize() << "\n";
         }
         out.close();
     }
@@ -365,7 +399,6 @@ public:
     void loadFromFile(const string& filename) {
         ifstream in(filename);
         if (!in) return;
-
         clearMemory();
         string line;
         while (getline(in, line)) {
@@ -378,31 +411,34 @@ public:
             getline(ss, c, '|');
             getline(ss, u_str, '|');
             getline(ss, loc_str, '|');
-
             if (!i.empty() && !t.empty()) {
-                T* newIssue = new CivicIssue(i, t, d, w, c, loc_str);
-                
-                int upvotes = u_str.empty() ? 0 : stoi(u_str);
-                for (int k = 0; k < upvotes; k++) {
-                    ++(*newIssue);
-                }
-
-                addIssue(newIssue);
+                T* ni = new CivicIssue(i, t, d, w, c, loc_str);
+                int uv = u_str.empty() ? 0 : stoi(u_str);
+                for (int k = 0; k < uv; k++) ++(*ni);
+                addIssue(ni);
             }
         }
         in.close();
     }
-    
+
     T* findById(const string& targetId) {
-        for (auto item : issues) {
-            if (item->getId() == targetId) {
-                return item;
-            }
+        for (int i = 0; i < count; i++) {
+            if (issues[i]->getId() == targetId) return issues[i];
         }
+        return nullptr;
+    }
+
+    // Get issue by index (pointer to object)
+    T* getAt(int index) {
+        if (index >= 0 && index < count) return issues[index];
         return nullptr;
     }
 };
 
+// FUNCTION TEMPLATE — works with any data type (string, int, char*, etc.)
+// 'template <typename T>' means T can be any type
+// Example: printHeader("Hello") → T is const char*
+//          printHeader(42)      → T is int
 template <typename T>
 void printHeader(T titleText) {
     cout << "\n=========================================\n";
@@ -410,409 +446,283 @@ void printHeader(T titleText) {
     cout << "=========================================\n";
 }
 
-// ════════════════════════════════════════════════════════
-// BACKEND WEB SERVER — NagarsevakServer Class
-// ════════════════════════════════════════════════════════
-
-class NagarsevakServer {
-private:
-    int port;
-    IssueManager<CivicIssue>& manager;
-
-    string urlDecode(string str) {
-        string ret;
-        ret.reserve(str.size());
-        char ch;
-        int ii;
-        for (size_t i = 0; i < str.length(); i++) {
-            if (str[i] == '%') {
-                if (i + 2 < str.length()) {
-                    sscanf(str.substr(i + 1, 2).c_str(), "%x", &ii);
-                    ch = static_cast<char>(ii);
-                    ret += ch;
-                    i += 2;
-                }
-            } else if (str[i] == '+') {
-                ret += ' ';
-            } else {
-                ret += str[i];
-            }
-        }
-        return ret;
-    }
-
-    string getValue(const string& data, const string& key) {
-        size_t start = data.find(key + "=");
-        if (start == string::npos) return "";
-        start += key.length() + 1;
-        size_t end = data.find("&", start);
-        if (end == string::npos) end = data.length();
-        return urlDecode(data.substr(start, end - start));
-    }
-
-    string readFile(const string& filepath) {
-        ifstream file(filepath);
-        if (!file.is_open()) return "";
-        stringstream buffer;
-        buffer << file.rdbuf();
-        return buffer.str();
-    }
-    
-    string getMimeType(const string& path) {
-        if (path.find(".html") != string::npos) return "text/html";
-        if (path.find(".css") != string::npos)  return "text/css";
-        if (path.find(".js") != string::npos)   return "application/javascript";
-        if (path.find(".json") != string::npos)  return "application/json";
-        if (path.find(".png") != string::npos)   return "image/png";
-        if (path.find(".jpg") != string::npos || path.find(".jpeg") != string::npos) return "image/jpeg";
-        return "text/plain";
-    }
-    
-    string buildResponse(int statusCode, const string& contentType, const string& body, 
-                         const string& extraHeaders = "") {
-        string status;
-        switch (statusCode) {
-            case 200: status = "200 OK"; break;
-            case 404: status = "404 Not Found"; break;
-            case 400: status = "400 Bad Request"; break;
-            case 500: status = "500 Internal Server Error"; break;
-            default:  status = to_string(statusCode); break;
-        }
-        
-        return "HTTP/1.1 " + status + "\r\n"
-             + "Content-Type: " + contentType + "\r\n"
-             + "Connection: close\r\n"
-             + "Content-Length: " + to_string(body.length()) + "\r\n"
-             + "Access-Control-Allow-Origin: *\r\n"
-             + extraHeaders
-             + "\r\n"
-             + body;
-    }
-
-    void logRequest(const string& method, const string& path) {
-        time_t now = time(nullptr);
-        struct tm timeinfo;
-#ifdef _WIN32
-        localtime_s(&timeinfo, &now);
-#else
-        localtime_r(&now, &timeinfo);
-#endif
-        char timeBuf[32];
-        strftime(timeBuf, sizeof(timeBuf), "%H:%M:%S", &timeinfo);
-        cout << " [" << timeBuf << "] " << method << " " << path << "\n";
-    }
-
-public:
-    NagarsevakServer(int p, IssueManager<CivicIssue>& m) : port(p), manager(m) {}
-
-    void start() {
-        try {
-#ifdef _WIN32
-            WSADATA wsaData;
-            if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-                throw NetworkException("WSA/Socket initialization failed.");
-            }
-            SOCKET server_fd, new_socket;
-#else
-            int server_fd, new_socket;
-            int opt = 1;
-#endif
-
-            struct sockaddr_in address;
-            int addrlen = sizeof(address);
-
-            server_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-#ifndef _WIN32
-            if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-                cerr << "setsockopt Error\n";
-            }
-#endif
-
-            address.sin_family = AF_INET;
-            address.sin_addr.s_addr = INADDR_ANY;
-            address.sin_port = htons(port);
-
-            if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
-                throw NetworkException("Bind failed. Port " + to_string(port) + " might be in use.");
-            }
-
-            listen(server_fd, 10);
-
-            printHeader("NAGARSEVAK CONNECT — SERVER ENGINE");
-            cout << "\n";
-            cout << " ┌─────────────────────────────────────────┐\n";
-            cout << " │  🏛️  Nagarsevak Connect Server v2.0      │\n";
-            cout << " │  📡  Port: " << port << "                           │\n";
-            cout << " │  📋  Issues Loaded: " << setw(4) << left << manager.getCount() << "                 │\n";
-            cout << " │  🔗  http://localhost:" << port << "/              │\n";
-            cout << " │  ⏹️   Press Ctrl+C to stop               │\n";
-            cout << " └─────────────────────────────────────────┘\n\n";
-            cout << " OOP Concepts Active:\n";
-            cout << "   ✅ Inheritance (Multi-level)  ✅ Polymorphism (Virtual)\n";
-            cout << "   ✅ Encapsulation (Access)     ✅ Abstraction (Interface)\n";
-            cout << "   ✅ Templates & STL            ✅ Exception Handling\n";
-            cout << "   ✅ Operator Overloading        ✅ Friend Functions\n";
-            cout << "   ✅ Dynamic Memory (new/del)   ✅ Static Members\n\n";
-            cout << " Listening for requests...\n\n";
-
-            while (true) {
-#ifdef _WIN32
-                new_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen);
-#else
-                new_socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
-#endif
-                if (new_socket < 0) continue;
-
-                char buffer[30000] = {0};
-                int valread;
-#ifdef _WIN32
-                valread = recv(new_socket, buffer, 30000, 0);
-#else
-                valread = read(new_socket, buffer, 30000);
-#endif
-
-                if (valread <= 0) {
-#ifdef _WIN32
-                    closesocket(new_socket);
-#else
-                    close(new_socket);
-#endif
-                    continue;
-                }
-
-                string request(buffer);
-                string response;
-
-                if (request.find("GET / ") != string::npos || request.find("GET /index.html") != string::npos) {
-                    logRequest("GET", "/");
-                    string content = readFile("index.html");
-                    response = content.empty()
-                        ? buildResponse(404, "text/plain", "index.html not found.")
-                        : buildResponse(200, "text/html", content);
-                }
-                else if (request.find("GET /style.css") != string::npos) {
-                    logRequest("GET", "/style.css");
-                    string content = readFile("style.css");
-                    response = content.empty()
-                        ? buildResponse(404, "text/plain", "style.css not found.")
-                        : buildResponse(200, "text/css", content);
-                }
-                else if (request.find("GET /api/issues") != string::npos) {
-                    logRequest("GET", "/api/issues");
-                    string jsonPayload = manager.getAllIssuesJSON();
-                    response = buildResponse(200, "application/json", jsonPayload);
-                }
-                else if (request.find("POST /api/upvote") != string::npos) {
-                    size_t idStart = request.find("id=");
-                    string issueId = "";
-                    if (idStart != string::npos) {
-                        idStart += 3;
-                        size_t idEnd = request.find_first_of(" &\r\n", idStart);
-                        if (idEnd == string::npos) idEnd = request.length();
-                        issueId = request.substr(idStart, idEnd - idStart);
-                    }
-                    
-                    logRequest("POST", "/api/upvote?id=" + issueId);
-                    
-                    CivicIssue* found = manager.findById(issueId);
-                    if (found) {
-                        ++(*found);
-                        manager.saveToFile("issues.txt");
-                        cout << "   ▲ Upvoted: " << *found << "\n";
-                        response = buildResponse(200, "application/json", 
-                            "{\"status\":\"success\",\"message\":\"Upvoted " + issueId + "\"}");
-                    } else {
-                        response = buildResponse(404, "application/json", 
-                            "{\"status\":\"error\",\"message\":\"Issue not found\"}");
-                    }
-                }
-                else if (request.find("POST /submit") != string::npos) {
-                    logRequest("POST", "/submit");
-                    size_t body_pos = request.find("\r\n\r\n");
-                    if (body_pos != string::npos) {
-                        string body = request.substr(body_pos + 4);
-                        string title = getValue(body, "title");
-                        string ward = getValue(body, "ward");
-                        string category = getValue(body, "category");
-                        string description = getValue(body, "description");
-                        string locationStr = getValue(body, "location");
-
-                        if (!title.empty() && !ward.empty()) {
-                            string newId = "ISSUE-" + to_string(Report::getTotalReports() + 1);
-
-                            CivicIssue* newIssue = new CivicIssue(newId, title, description, ward, category, locationStr);
-                            newIssue->logCreation();
-                            manager.addIssue(newIssue);
-                            manager.saveToFile("issues.txt");
-
-                            cout << "   ✅ New Issue: " << *newIssue << "\n";
-                        }
-
-                        response = buildResponse(200, "application/json",
-                            "{\"status\":\"success\",\"message\":\"Issue Reported Successfully\"}");
-                    }
-                }
-                else {
-                    logRequest("???", "Unknown Route");
-                    response = buildResponse(404, "text/plain", "Not Found.");
-                }
-
-                send(new_socket, response.c_str(), response.length(), 0);
-
-#ifdef _WIN32
-                closesocket(new_socket);
-#else
-                close(new_socket);
-#endif
-            }
-#ifdef _WIN32
-            WSACleanup();
-#endif
-        } catch (const NetworkException& e) {
-            cerr << " 🔴 NETWORK ERROR [" << e.getTimestamp() << "]: " << e.what() << "\n";
-        } catch (const FileException& e) {
-            cerr << " 🔴 FILE ERROR [" << e.getTimestamp() << "]: " << e.what() << "\n";
-        } catch (const ServerException& e) {
-            cerr << " 🔴 SERVER ERROR [" << e.getTimestamp() << "]: " << e.what() << "\n";
-        } catch (const exception& e) {
-            cerr << " 🔴 SYSTEM ERROR: " << e.what() << "\n";
-        }
-    }
-};
-
-// ════════════════════════════════════════════════════════
-// MAIN — Menu-Driven Admin Console
-// ════════════════════════════════════════════════════════
+// ====== MENU-DRIVEN TERMINAL APPLICATION ======
 
 void showMenu() {
-    printHeader("NAGARSEVAK CONNECT — ADMIN CONSOLE");
-    cout << "\n";
-    cout << " ┌──────────────────────────────────┐\n";
-    cout << " │  1. 🌐  Start Web Server         │\n";
-    cout << " │  2. 📋  View All Issues           │\n";
-    cout << " │  3. 🔥  View with Priorities      │\n";
-    cout << " │  4. 🗑️   Clear All Issues          │\n";
-    cout << " │  5. 🧪  Demo Polymorphism         │\n";
-    cout << " │  6. 📊  Show OOP Stats            │\n";
-    cout << " │  7. ❌  Exit                      │\n";
-    cout << " └──────────────────────────────────┘\n";
-    cout << "\n Enter your choice: ";
+    cout << "\n-----------------------------------------\n";
+    cout << "   NAGARSEVAK CONNECT - MAIN MENU\n";
+    cout << "-----------------------------------------\n";
+    cout << "  1. Report New Issue\n";
+    cout << "  2. View All Issues\n";
+    cout << "  3. View Issues with Priority\n";
+    cout << "  4. Upvote an Issue\n";
+    cout << "  5. Search Issue by ID\n";
+    cout << "  6. Clear All Issues\n";
+    cout << "  7. Demo: Polymorphism\n";
+    cout << "  8. Demo: Copy Constructor\n";
+    cout << "  9. Show OOP Stats\n";
+    cout << "  0. Exit\n";
+    cout << "-----------------------------------------\n";
+    cout << "  Enter your choice: ";
 }
 
-int main(int argc, char* argv[]) {
+int main() {
     IssueManager<CivicIssue> manager;
-    manager.loadFromFile("issues.txt");
 
-    // Automatically start server on port 3000 if --server flag is passed
-    if (argc > 1 && string(argv[1]) == "--server") {
-        NagarsevakServer server(3000, manager);
-        server.start();
-        return 0;
+    // Load existing issues from file (Exception handling)
+    try {
+        manager.loadFromFile("issues.txt");
+    } catch (const FileException& e) {
+        cout << "   Warning: " << e.what() << "\n";
     }
 
-    NagarsevakServer server(8080, manager);
-
     printHeader("WELCOME TO NAGARSEVAK CONNECT");
-    cout << "\n   Pune Municipal Corporation — Smart Civic Platform\n";
+    cout << "\n   Pune Municipal Corporation - Smart Civic Platform\n";
     cout << "   Built with C++ OOP Architecture\n";
     cout << "   Issues loaded from disk: " << manager.getCount() << "\n";
     cout << "   Total Report objects alive: " << Report::getTotalReports() << "\n";
 
+    // Display Ward Directory at startup
+    printHeader("PUNE MUNICIPAL CORPORATION - WARD DIRECTORY");
+    cout << "\n   Find your ward number below:\n\n";
+    cout << "   Ward 1  - Vishrambaug          Ward 2  - Kasba Peth\n";
+    cout << "   Ward 3  - Raviwar Peth         Ward 4  - Somwar Peth\n";
+    cout << "   Ward 5  - Mangalwar Peth       Ward 6  - Guruwar Peth\n";
+    cout << "   Ward 7  - Shukrawar Peth       Ward 8  - Sadashiv Peth\n";
+    cout << "   Ward 9  - Narayan Peth         Ward 10 - Nana Peth\n";
+    cout << "   Ward 11 - Ganj Peth            Ward 12 - Bhavani Peth\n";
+    cout << "   Ward 13 - Dhole Patil Nagar    Ward 14 - Yerawada\n";
+    cout << "   Ward 15 - Shivajinagar         Ward 16 - Hadapsar\n";
+    cout << "   Ward 17 - Mundhwa              Ward 18 - Kondhwa\n";
+    cout << "   Ward 19 - Bibwewadi            Ward 20 - Dhankawadi\n";
+    cout << "   Ward 21 - Sahakarnagar         Ward 22 - Parvati\n";
+    cout << "   Ward 23 - Sinhagad Road        Ward 24 - Warje\n";
+    cout << "   Ward 25 - Karve Nagar          Ward 26 - Erandwane\n";
+    cout << "   Ward 27 - Model Colony         Ward 28 - Aundh\n";
+    cout << "   Ward 29 - Deccan Gymkhana      Ward 30 - Baner\n";
+    cout << "   Ward 31 - Kothrud              Ward 32 - Bavdhan\n";
+    cout << "   Ward 33 - Pashan               Ward 34 - Sus\n";
+    cout << "   Ward 35 - Hinjewadi            Ward 36 - Wakad\n";
+    cout << "   Ward 37 - Pimpri               Ward 38 - Chinchwad\n";
+    cout << "   Ward 39 - Nigdi                Ward 40 - Akurdi\n";
+    cout << "   Ward 41 - Sangvi\n";
+    cout << "\n   Use your ward number while reporting issues.\n";
+
     int choice;
+    int issueCounter = manager.getCount();
+
     do {
         showMenu();
         if (!(cin >> choice)) {
             cin.clear();
             cin.ignore(INT_MAX, '\n');
-            choice = 0;
+            choice = -1;
         }
 
         switch (choice) {
-            case 1:
-                server.start();
+
+            // ---- REPORT NEW ISSUE ----
+            case 1: {
+                printHeader("REPORT NEW CIVIC ISSUE");
+                cin.ignore(INT_MAX, '\n');
+
+                string title, desc, ward, category, loc;
+
+                cout << "   Title: ";
+                getline(cin, title);
+                cout << "   Description: ";
+                getline(cin, desc);
+                cout << "   Ward (e.g. 29 Deccan Gymkhana): ";
+                getline(cin, ward);
+                cout << "   Category (Pothole/Garbage/Water/Electricity/Other): ";
+                getline(cin, category);
+                cout << "   Location: ";
+                getline(cin, loc);
+
+                if (title.empty() || ward.empty()) {
+                    cout << "\n   Error: Title and Ward are required!\n";
+                    break;
+                }
+
+                try {
+                    issueCounter++;
+                    string newId = "ISSUE-" + to_string(issueCounter);
+
+                    // Dynamic memory allocation (new)
+                    CivicIssue* newIssue = new CivicIssue(newId, title, desc, ward, category, loc);
+                    newIssue->logCreation();
+                    manager.addIssue(newIssue);
+                    manager.saveToFile("issues.txt");
+
+                    cout << "\n   Issue reported successfully!\n";
+                    cout << "   " << *newIssue << "\n";  // Friend operator<<
+                } catch (const FileException& e) {
+                    cerr << "   Save Error: " << e.what() << "\n";
+                } catch (const exception& e) {
+                    cerr << "   Error: " << e.what() << "\n";
+                }
                 break;
-                
+            }
+
+            // ---- VIEW ALL ISSUES ----
             case 2:
                 printHeader("ALL REPORTED ISSUES");
-                manager.displayAll();
+                manager.displayAll();  // Overloaded version (no args)
                 break;
-                
+
+            // ---- VIEW WITH PRIORITIES ----
             case 3:
                 printHeader("ISSUES WITH PRIORITY ANALYSIS");
-                manager.displayAll(true);
+                manager.displayAll(true);  // Overloaded version (with bool)
                 break;
-                
-            case 4:
+
+            // ---- UPVOTE AN ISSUE ----
+            case 4: {
+                printHeader("UPVOTE AN ISSUE");
+                if (manager.getCount() == 0) {
+                    cout << "   No issues to upvote.\n";
+                    break;
+                }
+                manager.displayAll();
+                cin.ignore(INT_MAX, '\n');
+                cout << "\n   Enter Issue ID to upvote (e.g. ISSUE-1): ";
+                string targetId;
+                getline(cin, targetId);
+
+                CivicIssue* found = manager.findById(targetId);
+                if (found) {
+                    ++(*found);  // Unary operator++ overloading
+                    try {
+                        manager.saveToFile("issues.txt");
+                    } catch (const FileException& e) {
+                        cerr << "   " << e.what() << "\n";
+                    }
+                    cout << "   Upvoted! " << *found << "\n";
+                    printIssueUrgency(*found);  // Friend function
+                } else {
+                    cout << "   Issue '" << targetId << "' not found.\n";
+                }
+                break;
+            }
+
+            // ---- SEARCH BY ID ----
+            case 5: {
+                printHeader("SEARCH ISSUE BY ID");
+                cin.ignore(INT_MAX, '\n');
+                cout << "   Enter Issue ID: ";
+                string searchId;
+                getline(cin, searchId);
+
+                CivicIssue* result = manager.findById(searchId);
+                if (result) {
+                    cout << "\n   Found:\n";
+                    result->display();       // Virtual function call
+                    printIssueUrgency(*result); // Friend function
+                } else {
+                    cout << "   Issue '" << searchId << "' not found.\n";
+                }
+                break;
+            }
+
+            // ---- CLEAR ALL ----
+            case 6:
+                printHeader("CLEAR ALL ISSUES");
                 manager.clearMemory();
                 try {
                     manager.saveToFile("issues.txt");
-                    cout << "   ✅ All issues cleared from system!\n";
+                    cout << "   All issues cleared from system!\n";
+                    cout << "   Reports alive: " << Report::getTotalReports() << "\n";
                 } catch (const FileException& e) {
-                    cout << "   ❌ " << e.what() << "\n";
+                    cout << "   Error: " << e.what() << "\n";
                 }
                 break;
-                
-            case 5:
+
+            // ---- POLYMORPHISM DEMO ----
+            case 7: {
                 printHeader("POLYMORPHISM DEMONSTRATION");
-                cout << "\n   Creating objects via polymorphic base pointer array...\n\n";
-                {
-                    Report* mockArray[3];
-                    mockArray[0] = new CivicIssue("DEMO-1", "Pothole on FC Road", "Large crater near signal", "29 Deccan Gymkhana", "Pothole", "FC Road");
-                    mockArray[1] = new UrgentIssue("URG-1", "Bridge Collapse Risk", "Cracks observed on flyover", "16 Hadapsar", "Emergency", "Hadapsar Flyover", "CRITICAL");
-                    mockArray[2] = new CivicIssue("DEMO-2", "Garbage Overflow", "Bins not cleared for 3 days", "31 Kothrud", "Garbage", "Kothrud Depot");
+                cout << "\n   Creating objects via base class pointer array...\n";
 
-                    CivicIssue* demo1 = dynamic_cast<CivicIssue*>(mockArray[0]);
-                    if (demo1) {
-                        for (int v = 0; v < 7; v++) ++(*demo1);
-                        cout << "   [Operator++] Applied 7 upvotes to DEMO-1\n";
-                    }
+                // Array of pointers to base class (Runtime Polymorphism)
+                Report* arr[3];
+                arr[0] = new CivicIssue("DEMO-1", "Pothole on FC Road",
+                    "Large crater near signal", "29 Deccan Gymkhana", "Pothole", "FC Road");
+                arr[1] = new UrgentIssue("URG-1", "Bridge Collapse Risk",
+                    "Cracks on flyover", "16 Hadapsar", "Emergency", "Hadapsar Flyover", "CRITICAL");
+                arr[2] = new CivicIssue("DEMO-2", "Garbage Overflow",
+                    "Bins not cleared 3 days", "31 Kothrud", "Garbage", "Kothrud Depot");
 
-                    cout << "\n   ── Polymorphic Display (late binding) ──\n\n";
-                    for (int i = 0; i < 3; i++) {
-                        mockArray[i]->display();
-                        mockArray[i]->logCreation();
-                        cout << "\n";
-                    }
-
-                    CivicIssue* demo2 = dynamic_cast<CivicIssue*>(mockArray[2]);
-                    if (demo1 && demo2) {
-                        cout << "   [Operator<] DEMO-1 > DEMO-2? " 
-                             << ((*demo2 < *demo1) ? "Yes" : "No") << "\n";
-                        cout << "   [Stream<<] " << *demo1 << "\n";
-                        cout << "   [Stream<<] " << *demo2 << "\n";
-                    }
-
-                    if (demo1) {
-                        cout << "   [Friend Fn] ";
-                        printIssueUrgency(*demo1);
-                    }
-
-                    cout << "\n   Cleaning up dynamic memory...\n";
-                    for (int i = 0; i < 3; i++) {
-                        delete mockArray[i];
-                    }
-                    cout << "   ✅ Memory freed. Reports alive: " << Report::getTotalReports() << "\n";
+                // dynamic_cast + operator++ demo
+                CivicIssue* d1 = dynamic_cast<CivicIssue*>(arr[0]);
+                if (d1) {
+                    for (int v = 0; v < 7; v++) ++(*d1);
+                    cout << "   [Operator++] Applied 7 upvotes to DEMO-1\n";
                 }
+
+                // Virtual function calls (late binding)
+                cout << "\n   -- Polymorphic Display (late binding) --\n";
+                for (int i = 0; i < 3; i++) {
+                    cout << "\n";
+                    arr[i]->display();     // Calls correct overridden version
+                    arr[i]->logCreation(); // Interface method
+                }
+
+                // Binary operator< demo
+                CivicIssue* d2 = dynamic_cast<CivicIssue*>(arr[2]);
+                if (d1 && d2) {
+                    cout << "\n   [Operator<] DEMO-1 > DEMO-2? "
+                         << ((*d2 < *d1) ? "Yes" : "No") << "\n";
+                    cout << "   [Stream<<] " << *d1 << "\n";
+                    cout << "   [Stream<<] " << *d2 << "\n";
+                }
+
+                // Friend function
+                if (d1) {
+                    cout << "   [Friend Fn] ";
+                    printIssueUrgency(*d1);
+                }
+
+                // Clean up dynamic memory (delete)
+                cout << "\n   Cleaning up dynamic memory (delete)...\n";
+                for (int i = 0; i < 3; i++) delete arr[i];
+                cout << "   Memory freed. Reports alive: " << Report::getTotalReports() << "\n";
                 break;
-                
-            case 6:
+            }
+
+            // ---- COPY CONSTRUCTOR DEMO ----
+            case 8: {
+                printHeader("COPY CONSTRUCTOR DEMONSTRATION");
+                cout << "\n   Creating original CivicIssue...\n";
+                CivicIssue original("COPY-1", "Water Leak", "Pipe burst on MG Road",
+                                    "15 Shivajinagar", "Water", "MG Road");
+                original.display();
+                cout << "   Reports alive after original: " << Report::getTotalReports() << "\n";
+
+                cout << "\n   Creating copy using Copy Constructor...\n";
+                CivicIssue copied(original);  // Copy constructor invoked
+                copied.display();
+                cout << "   Reports alive after copy: " << Report::getTotalReports() << "\n";
+
+                cout << "\n   Both objects will be destroyed at end of this block.\n";
+                break;
+            }
+
+            // ---- OOP STATS ----
+            case 9:
                 printHeader("OOP SYSTEM STATISTICS");
-                cout << "\n   ┌────────────────────────────────────┐\n";
-                cout << "   │ Reports Currently Alive : " << setw(6) << Report::getTotalReports() << "   │\n";
-                cout << "   │ Lifetime Reports Created: " << setw(6) << Report::getLifetimeReports() << "   │\n";
-                cout << "   │ Issues in Manager       : " << setw(6) << manager.getCount() << "   │\n";
-                cout << "   └────────────────────────────────────┘\n";
+                cout << "\n   Reports Currently Alive : " << Report::getTotalReports() << "\n";
+                cout << "   Lifetime Reports Created: " << Report::getLifetimeReports() << "\n";
+                cout << "   Issues in Manager       : " << manager.getCount() << "\n";
                 break;
-                
-            case 7:
-                cout << "\n   Exiting Nagarsevak Connect. Jai Hind! 🇮🇳\n\n";
+
+            // ---- EXIT ----
+            case 0:
+                cout << "\n   Exiting Nagarsevak Connect. Jai Hind!\n\n";
                 break;
-                
+
             default:
-                cout << "   ⚠️  Invalid option. Use 1-7.\n";
+                cout << "   Invalid option. Use 0-9.\n";
         }
-    } while (choice != 7);
+    } while (choice != 0);
 
     return 0;
 }
